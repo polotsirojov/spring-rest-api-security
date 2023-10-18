@@ -1,0 +1,144 @@
+package com.polot.gym.service.impl;
+
+import com.polot.gym.entity.Trainer;
+import com.polot.gym.entity.TrainingType;
+import com.polot.gym.entity.User;
+import com.polot.gym.entity.enums.Role;
+import com.polot.gym.payload.request.*;
+import com.polot.gym.payload.response.*;
+import com.polot.gym.repository.TrainerRepository;
+import com.polot.gym.repository.TrainingTypeRepository;
+import com.polot.gym.service.AuthService;
+import com.polot.gym.service.TrainerService;
+import com.polot.gym.service.TrainingService;
+import com.polot.gym.service.UserService;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Service
+public class TrainerServiceImpl implements TrainerService {
+    private final UserService userService;
+    private final TrainerRepository trainerRepository;
+    private final TrainingTypeRepository trainingTypeRepository;
+    private final TrainingService trainingService;
+    private final AuthService authService;
+    private final UserSession userSession;
+
+    public TrainerServiceImpl(UserService userService,
+                              @Lazy TrainerRepository trainerRepository,
+                              TrainingTypeRepository trainingTypeRepository,
+                              @Lazy TrainingService trainingService,
+                              AuthService authService, UserSession userSession) {
+        this.userService = userService;
+        this.trainerRepository = trainerRepository;
+        this.trainingTypeRepository = trainingTypeRepository;
+        this.trainingService = trainingService;
+        this.authService = authService;
+        this.userSession = userSession;
+    }
+
+    @Override
+    public UsernamePasswordResponse register(TrainerRegisterRequest request) {
+        TrainingType trainingType = trainingTypeRepository.findById(request.getSpecializationId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Training Type not found"));
+        UserPasswordResponse user = userService.createUser(UserRequest.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .build(), Role.TRAINER);
+
+        trainerRepository.save(Trainer.builder()
+                .specialization(trainingType)
+                .user(user.getUser())
+                .build());
+
+        String accessToken = authService.authenticate(user.getUser().getUsername(), user.getPassword());
+
+        return UsernamePasswordResponse.builder()
+                .username(user.getUser().getUsername())
+                .password(user.getPassword())
+                .accessToken(accessToken)
+                .build();
+    }
+
+    @Override
+    public TrainerProfileResponse getProfile() {
+        User user = userSession.getUser();
+        Trainer trainer = trainerRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainer not found"));
+        return mapTrainer(user, trainer);
+    }
+
+    @Override
+    @Transactional
+    public TrainerProfileResponse updateProfile(TrainerUpdateProfileRequest request) {
+        TrainingType trainingType = trainingTypeRepository.findById(request.getSpecializationId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, " Training type not found"));
+        User user = userService.selectByUsernameAndPassword(request.getUsername(), request.getPassword());
+        userService.updateUser(user, request.getFirstName(), request.getLastName(), request.getIsActive());
+
+        Trainer trainer = trainerRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainer not found"));
+        trainer.setSpecialization(trainingType);
+        trainerRepository.save(trainer);
+        return mapTrainer(user, trainer);
+    }
+
+    @Override
+    public List<TrainerResponse> getNotAssignedTrainers(String username, String password) {
+        User user = userService.selectByUsernameAndPassword(username, password);
+        List<Trainer> trainers = trainerRepository.getNotAssignedTrainers();
+        return trainers.stream().map(trainer -> TrainerResponse.builder()
+                .username(user.getUsername())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .specialization(trainer.getSpecialization())
+                .build()).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Trainer> getTrainersByUsername(List<TrainerUsernameRequest> trainers) {
+        return trainerRepository.findAllByUser_usernameIn(trainers.stream().map(TrainerUsernameRequest::getUsername).collect(Collectors.toList()));
+    }
+
+    @Override
+    public List<TrainingResponse> getTrainings(String username, String password, LocalDate periodFrom, LocalDate periodTo, String traineeName) {
+        User user = userService.selectByUsernameAndPassword(username, password);
+        Trainer trainer = trainerRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainer not found"));
+        return trainingService.getTrainerTrainings(trainer, periodFrom, periodTo, traineeName);
+    }
+
+    @Override
+    public Trainer getByUsername(String traineeUsername) {
+        User user = userService.selectByUsername(traineeUsername);
+        return trainerRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainer not found"));
+    }
+
+    @Override
+    public void activeDeactive(StatusRequest request) {
+        User user = userService.selectByUsernameAndPassword(request.getUsername(), request.getPassword());
+        trainerRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainer not found"));
+        userService.updateUserStatus(user, request.getIsActive());
+    }
+
+    private TrainerProfileResponse mapTrainer(User user, Trainer trainer) {
+        return TrainerProfileResponse.builder()
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .specialization(trainer.getSpecialization())
+                .isActive(user.getIsActive())
+                .trainees(trainer.getTrainings().stream().map(training -> {
+                    User trainerUser = training.getTrainer().getUser();
+                    return TrainerResponse.builder()
+                            .username(trainerUser.getUsername())
+                            .firstName(trainerUser.getFirstName())
+                            .lastName(trainerUser.getLastName())
+                            .specialization(training.getTrainer().getSpecialization())
+                            .build();
+                }).collect(Collectors.toList()))
+                .build();
+    }
+}
