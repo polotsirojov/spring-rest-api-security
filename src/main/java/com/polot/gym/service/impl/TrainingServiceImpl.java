@@ -39,8 +39,11 @@ public class TrainingServiceImpl implements TrainingService {
     @Override
     public List<TrainingResponse> getTraineeTrainings(Trainee trainee, LocalDate periodFrom, LocalDate periodTo, String trainerName, Integer trainingTypeId) {
         StringBuilder jpql = new StringBuilder("SELECT t FROM Training t WHERE t.trainee = :trainee ");
-        if (periodFrom != null && periodTo != null) {
-            jpql.append("and t.trainingDate between :periodFrom and :periodTo ");
+        if (periodFrom != null) {
+            jpql.append("and t.trainingDate >= :periodFrom ");
+        }
+        if (periodTo != null) {
+            jpql.append("and t.trainingDate <= :periodTo ");
         }
         if (trainerName != null) {
             jpql.append("and t.trainer.user.firstName=:trainerName ");
@@ -50,8 +53,10 @@ public class TrainingServiceImpl implements TrainingService {
         }
         Query query = entityManager.createQuery(jpql.toString(), Training.class);
         query.setParameter("trainee", trainee);
-        if (periodFrom != null && periodTo != null) {
+        if (periodFrom != null) {
             query.setParameter("periodFrom", periodFrom);
+        }
+        if (periodTo != null) {
             query.setParameter("periodTo", periodTo);
         }
         if (trainerName != null) {
@@ -73,16 +78,21 @@ public class TrainingServiceImpl implements TrainingService {
     @Override
     public List<TrainingResponse> getTrainerTrainings(Trainer trainer, LocalDate periodFrom, LocalDate periodTo, String traineeName) {
         StringBuilder jpql = new StringBuilder("SELECT t FROM Training t WHERE t.trainer = :trainer ");
-        if (periodFrom != null && periodTo != null) {
-            jpql.append("and t.trainingDate between :periodFrom and :periodTo ");
+        if (periodFrom != null) {
+            jpql.append("and t.trainingDate >= :periodFrom ");
+        }
+        if (periodTo != null) {
+            jpql.append("and t.trainingDate <= :periodTo ");
         }
         if (traineeName != null) {
             jpql.append("and t.trainee.user.firstName=:traineeName ");
         }
         Query query = entityManager.createQuery(jpql.toString(), Training.class);
         query.setParameter("trainer", trainer);
-        if (periodFrom != null && periodTo != null) {
+        if (periodFrom != null) {
             query.setParameter("periodFrom", periodFrom);
+        }
+        if (periodTo != null) {
             query.setParameter("periodTo", periodTo);
         }
         if (traineeName != null) {
