@@ -50,7 +50,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             response.setContentType("application/json");
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.writeValue(response.getWriter(), "JWT token has expired");
-            return;
+            filterChain.doFilter(request, response);
         }
         filterChain.doFilter(request, response);
     }
