@@ -39,7 +39,8 @@ public class SecurityConfig {
         return http.cors().and().csrf().disable()
                 .authorizeHttpRequests()
                 .requestMatchers(HttpMethod.GET,
-                        "/api/v1/user/login"
+                        "/api/v1/user/login",
+                        "/actuator/**"
                 ).permitAll()
                 .requestMatchers(HttpMethod.POST,
                         "/api/v1/trainee",
