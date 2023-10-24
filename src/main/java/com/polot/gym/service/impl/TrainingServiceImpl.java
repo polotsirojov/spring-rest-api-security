@@ -12,7 +12,7 @@ import com.polot.gym.service.TraineeService;
 import com.polot.gym.service.TrainerService;
 import com.polot.gym.service.TrainingService;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.Query;
+import jakarta.persistence.TypedQuery;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -51,7 +51,7 @@ public class TrainingServiceImpl implements TrainingService {
         if (trainingTypeId != null) {
             jpql.append("and t.trainingType.id=:trainingTypeId");
         }
-        Query query = entityManager.createQuery(jpql.toString(), Training.class);
+        TypedQuery<Training> query = entityManager.createQuery(jpql.toString(), Training.class);
         query.setParameter("trainee", trainee);
         if (periodFrom != null) {
             query.setParameter("periodFrom", periodFrom);
@@ -65,7 +65,7 @@ public class TrainingServiceImpl implements TrainingService {
         if (trainingTypeId != null) {
             query.setParameter("trainingTypeId", trainingTypeId);
         }
-        List<Training> resultList = (List<Training>) query.getResultList();
+        List<Training> resultList = query.getResultList();
         return resultList.stream().map(training -> TrainingResponse.builder()
                 .name(training.getTrainingName())
                 .date(training.getTrainingDate())
@@ -87,7 +87,7 @@ public class TrainingServiceImpl implements TrainingService {
         if (traineeName != null) {
             jpql.append("and t.trainee.user.firstName=:traineeName ");
         }
-        Query query = entityManager.createQuery(jpql.toString(), Training.class);
+        TypedQuery<Training> query = entityManager.createQuery(jpql.toString(), Training.class);
         query.setParameter("trainer", trainer);
         if (periodFrom != null) {
             query.setParameter("periodFrom", periodFrom);
@@ -99,7 +99,7 @@ public class TrainingServiceImpl implements TrainingService {
             query.setParameter("traineeName", traineeName);
         }
 
-        List<Training> resultList = (List<Training>) query.getResultList();
+        List<Training> resultList = query.getResultList();
         return resultList.stream().map(training -> TrainingResponse.builder()
                 .name(training.getTrainingName())
                 .date(training.getTrainingDate())
