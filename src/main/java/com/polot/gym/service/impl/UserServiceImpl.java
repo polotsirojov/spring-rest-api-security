@@ -17,7 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Map;
+import java.time.LocalDateTime;
 import java.util.Random;
 
 @Service
@@ -43,10 +43,32 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UsernamePasswordResponse login(String username, String password) {
-        String accessToken = authService.authenticate(username, password);
-        return UsernamePasswordResponse.builder()
-                .accessToken(accessToken)
-                .build();
+        User user = userRepository.findByUsernameIgnoreCase(username).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        if (isUserLocked(user)) {
+            throw new ResponseStatusException(HttpStatus.LOCKED, "User is locked");
+        }
+        try {
+            String accessToken = authService.authenticate(username, password);
+            return UsernamePasswordResponse.builder()
+                    .accessToken(accessToken)
+                    .build();
+        } catch (Exception e) {
+            setAttemptAndNextLoginTime(user);
+            throw e;
+        }
+    }
+
+    private void setAttemptAndNextLoginTime(User user) {
+        user.setUnsuccessfulLoginAttempt(user.getUnsuccessfulLoginAttempt() + 1);
+        if (user.getUnsuccessfulLoginAttempt() == 3) {
+            user.setUnsuccessfulLoginAttempt(0);
+            user.setNextLoginTime(LocalDateTime.now().plusMinutes(5));
+        }
+        userRepository.save(user);
+    }
+
+    private boolean isUserLocked(User user) {
+        return user.getNextLoginTime() != null && user.getNextLoginTime().isAfter(LocalDateTime.now());
     }
 
     @Override
