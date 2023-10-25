@@ -54,6 +54,7 @@ public class UserServiceImpl implements UserService {
         }
         try {
             String accessToken = authService.authenticate(username, password);
+            clearUnsuccessfulLoginAttempts(user);
             return UsernamePasswordResponse.builder()
                     .accessToken(accessToken)
                     .build();
@@ -64,11 +65,21 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    private void clearUnsuccessfulLoginAttempts(User user) {
+        final int INITIAL_LOGIN_ATTEMPT = 0;
+
+        user.setUnsuccessfulLoginAttempt(INITIAL_LOGIN_ATTEMPT);
+        userRepository.save(user);
+    }
+
     private void setAttemptAndNextLoginTime(User user) {
-        user.setUnsuccessfulLoginAttempt(user.getUnsuccessfulLoginAttempt() + 1);
-        if (user.getUnsuccessfulLoginAttempt() == 3) {
-            user.setUnsuccessfulLoginAttempt(0);
-            user.setNextLoginTime(LocalDateTime.now().plusMinutes(5));
+        final int MAX_LOGIN_ATTEMPT = 3;
+        final int ADDED_MINUTES_FOR_NEXT_LOGIN = 5;
+        final int INCREMENT_LOGIN_ATTEMPT = 1;
+
+        user.setUnsuccessfulLoginAttempt(user.getUnsuccessfulLoginAttempt() + INCREMENT_LOGIN_ATTEMPT);
+        if (user.getUnsuccessfulLoginAttempt() >= MAX_LOGIN_ATTEMPT) {
+            user.setNextLoginTime(LocalDateTime.now().plusMinutes(ADDED_MINUTES_FOR_NEXT_LOGIN));
         }
         userRepository.save(user);
     }
