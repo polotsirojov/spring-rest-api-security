@@ -13,6 +13,8 @@ import com.polot.gym.service.TrainerService;
 import com.polot.gym.service.TrainingService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +29,7 @@ public class TrainingServiceImpl implements TrainingService {
     private final TraineeService traineeService;
     private final TrainerService trainerService;
     private final TrainingTypeRepository trainingTypeRepository;
+    private Logger log = LoggerFactory.getLogger(this.getClass());
 
     public TrainingServiceImpl(EntityManager entityManager, TrainingRepository trainingRepository, @Lazy TraineeService traineeService, @Lazy TrainerService trainerService, TrainingTypeRepository trainingTypeRepository) {
         this.entityManager = entityManager;
@@ -38,6 +41,7 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     public List<TrainingResponse> getTraineeTrainings(Trainee trainee, LocalDate periodFrom, LocalDate periodTo, String trainerName, Integer trainingTypeId) {
+        log.info("TrainingService getTraineeTrainings traineeId:{}, periodFrom:{}, periodTo:{}, trainerName:{}, trainingTypeId:{}", trainee.getId(), periodFrom, periodTo, trainerName, trainingTypeId);
         StringBuilder jpql = new StringBuilder("SELECT t FROM Training t WHERE t.trainee = :trainee ");
         if (periodFrom != null) {
             jpql.append("and t.trainingDate >= :periodFrom ");
@@ -77,6 +81,7 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     public List<TrainingResponse> getTrainerTrainings(Trainer trainer, LocalDate periodFrom, LocalDate periodTo, String traineeName) {
+        log.info("TrainingService getTrainerTrainings trainerId:{}, periodFrom:{}, periodTo:{}, traineeName:{}", trainer.getId(), periodFrom, periodTo, traineeName);
         StringBuilder jpql = new StringBuilder("SELECT t FROM Training t WHERE t.trainer = :trainer ");
         if (periodFrom != null) {
             jpql.append("and t.trainingDate >= :periodFrom ");
@@ -111,6 +116,7 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     public void create(CreateTrainingRequest request) {
+        log.info("TrainingService create data:{}", request);
         Trainer trainer = trainerService.getByUsername(request.getTrainerUsername());
         trainingRepository.save(Training.builder()
                 .trainee(traineeService.getByUsername(request.getTraineeUsername()))

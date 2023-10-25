@@ -10,6 +10,8 @@ import com.polot.gym.repository.UserRepository;
 import com.polot.gym.service.AuthService;
 import com.polot.gym.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,9 +28,11 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthService authService;
+    private Logger log = LoggerFactory.getLogger(this.getClass());
 
     @Override
     public UserPasswordResponse createUser(UserRequest request, Role role) {
+        log.info("UserService createUser user:{}, role:{}", request, role.name());
         String password = generateRandomText();
         User user = userRepository.save(User.builder()
                 .firstName(request.getFirstName())
@@ -43,6 +47,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UsernamePasswordResponse login(String username, String password) {
+        log.info("UserService login username:{}, password:{}", username, password);
         User user = userRepository.findByUsernameIgnoreCase(username).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         if (isUserLocked(user)) {
             throw new ResponseStatusException(HttpStatus.LOCKED, "User is locked");
@@ -54,6 +59,7 @@ public class UserServiceImpl implements UserService {
                     .build();
         } catch (Exception e) {
             setAttemptAndNextLoginTime(user);
+            log.error("UserService login error username:{}", username, e);
             throw e;
         }
     }
@@ -73,6 +79,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public HttpEntity<Void> changeLoginPassword(ChangeLoginPasswordRequest request) {
+        log.info("UserService changeLoginPassword data:{}", request);
         User user = selectByUsernameAndPassword(request.getUsername(), request.getOldPassword());
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
@@ -81,6 +88,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User selectByUsernameAndPassword(String username, String password) {
+        log.info("UserService selectByUsernameAndPassword username:{}, password:{}", username, password);
         User user = userRepository.findByUsernameIgnoreCase(username).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         if (!passwordEncoder.matches(password, user.getPassword()))
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Username or password is incorrect");
@@ -90,11 +98,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User selectByUsername(String username) {
+        log.info("UserService selectByUsername username:{}", username);
         return userRepository.findByUsernameIgnoreCase(username).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
     @Override
     public User updateUser(User user, String firstName, String lastName, Boolean isActive) {
+        log.info("UserService updateUser user:{}, firstName:{}, lastName:{}, isActive:{}", user, firstName, lastName, isActive);
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.setIsActive(isActive);
@@ -103,12 +113,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User updateUserStatus(User user, Boolean isActive) {
+        log.info("UserService updateUserStatus user:{}, isActive:{}", user, isActive);
         user.setIsActive(isActive);
         return userRepository.save(user);
     }
 
     @Override
     public void deleteUser(User user) {
+        log.info("UserService deleteUser user:{}", user);
         userRepository.delete(user);
     }
 
