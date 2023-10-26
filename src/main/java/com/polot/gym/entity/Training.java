@@ -17,7 +17,7 @@ import java.time.LocalDate;
 public class Training {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "trainee_id", nullable = false)

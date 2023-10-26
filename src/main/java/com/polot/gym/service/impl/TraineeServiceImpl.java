@@ -8,6 +8,8 @@ import com.polot.gym.payload.request.*;
 import com.polot.gym.payload.response.*;
 import com.polot.gym.repository.TraineeRepository;
 import com.polot.gym.service.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ public class TraineeServiceImpl implements TraineeService {
     private final TrainingService trainingService;
     private final AuthService authService;
     private final UserSession userSession;
+    private Logger log = LoggerFactory.getLogger(this.getClass());
 
     public TraineeServiceImpl(TraineeRepository traineeRepository,
                               UserService userService,
@@ -43,19 +46,22 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     @Transactional
     public UsernamePasswordResponse register(TraineeRegisterRequest request) {
+        log.info("TraineeService register trainee method");
         UserPasswordResponse user = userService.createUser(UserRequest.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .build(), Role.TRAINEE);
+        log.info("Trainee user created. username: {}", user.getUser().getUsername());
 
-        traineeRepository.save(Trainee.builder()
+        Trainee trainee = traineeRepository.save(Trainee.builder()
                 .dob(request.getDob())
                 .address(request.getAddress())
                 .user(user.getUser())
                 .build());
+        log.info("Trainee has created. id: {}", trainee.getId());
 
         String accessToken = authService.authenticate(user.getUser().getUsername(), user.getPassword());
-
+        log.info("Access token has created for trainee from trainee register method");
         return UsernamePasswordResponse.builder()
                 .username(user.getUser().getUsername())
                 .password(user.getPassword())
@@ -66,6 +72,7 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public TraineeProfileResponse getProfile() {
         User user = userSession.getUser();
+        log.info("TraineeService getProfile method username:{}", user.getUsername());
         Trainee trainee = traineeRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found"));
 
         return mapProfile(user, trainee);
@@ -95,6 +102,7 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     @Transactional
     public TraineeProfileResponse updateProfile(TraineeProfileUpdateRequest request) {
+        log.info("TraineeService updateProfile method. data: {}", request);
         User user = userService.selectByUsernameAndPassword(request.getUsername(), request.getPassword());
         Trainee trainee = traineeRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found"));
         userService.updateUser(user, request.getFirstName(), request.getLastName(), request.getIsActive());
@@ -107,6 +115,7 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     @Transactional
     public void deleteProfile(String username, String password) {
+        log.info("TraineeService deleteProfile method username:{}, password:{}", username, password);
         User user = userService.selectByUsernameAndPassword(username, password);
         Trainee trainee = traineeRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found"));
         traineeRepository.delete(trainee);
@@ -123,6 +132,7 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     public List<TrainingResponse> getTrainings(String username, String password, LocalDate periodFrom, LocalDate periodTo, String trainerName, Integer trainingTypeId) {
+        log.info("TraineeService getTrainings username:{}, password:{}, periodFrom:{}, periodTo:{}, trainerName:{}, trainingTypeId:{}", username, password, periodFrom, periodTo, trainerName, trainingTypeId);
         User user = userService.selectByUsernameAndPassword(username, password);
         Trainee trainee = traineeRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found"));
         return trainingService.getTraineeTrainings(trainee, periodFrom, periodTo, trainerName, trainingTypeId);
@@ -130,12 +140,14 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     public Trainee getByUsername(String traineeUsername) {
+        log.info("TraineeService getByUsername. traineeUsername:{}", traineeUsername);
         User user = userService.selectByUsername(traineeUsername);
         return traineeRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found"));
     }
 
     @Override
     public void activeDeactive(StatusRequest request) {
+        log.info("TraineeService activeDeactive. data:{}", request);
         User user = userService.selectByUsernameAndPassword(request.getUsername(), request.getPassword());
         traineeRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found"));
         userService.updateUserStatus(user, request.getIsActive());
