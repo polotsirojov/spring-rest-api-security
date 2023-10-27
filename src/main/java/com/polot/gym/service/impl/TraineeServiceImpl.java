@@ -17,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -114,20 +116,13 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Transactional
-    public void deleteProfile(String username, String password) {
+    public Boolean deleteProfile(String username, String password) {
         log.info("TraineeService deleteProfile method username:{}, password:{}", username, password);
         User user = userService.selectByUsernameAndPassword(username, password);
         Trainee trainee = traineeRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found"));
         traineeRepository.delete(trainee);
         userService.deleteUser(user);
-    }
-
-    @Override
-    public List<TrainerResponse> updateTrainers(UpdateTraineeTrainersRequest request) {
-        User user = userService.selectByUsername(request.getTraineeUsername());
-        Trainee trainee = traineeRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found"));
-        List<Trainer> trainers = trainerService.getTrainersByUsername(request.getTrainers());
-        return null;
+        return true;
     }
 
     @Override
@@ -146,10 +141,28 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
-    public void activeDeactive(StatusRequest request) {
+    public User activeDeactive(StatusRequest request) {
         log.info("TraineeService activeDeactive. data:{}", request);
         User user = userService.selectByUsernameAndPassword(request.getUsername(), request.getPassword());
         traineeRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found"));
-        userService.updateUserStatus(user, request.getIsActive());
+        return userService.updateUserStatus(user, request.getIsActive());
+    }
+
+    @Override
+    @Transactional
+    public List<TrainerResponse> updateTraineeTrainers(UpdateTraineeTrainersRequest request) {
+        User user = userService.selectByUsername(request.getTraineeUsername());
+        Trainee trainee = traineeRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found"));
+        List<Trainer> trainers = trainerService.getTrainersByUsername(request.getTrainers());
+        trainingService.deleteTraineeTrainers(trainee,trainers);
+        return trainee.getTrainings().stream().map(training -> {
+            User trainerUser = training.getTrainer().getUser();
+            return TrainerResponse.builder()
+                    .username(trainerUser.getUsername())
+                    .firstName(trainerUser.getFirstName())
+                    .lastName(trainerUser.getLastName())
+                    .specialization(training.getTrainer().getSpecialization())
+                    .build();
+        }).collect(Collectors.toList());
     }
 }

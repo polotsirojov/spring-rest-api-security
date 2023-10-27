@@ -1,6 +1,7 @@
 package com.polot.gym.service;
 
 import com.polot.gym.entity.Trainee;
+import com.polot.gym.entity.User;
 import com.polot.gym.payload.request.*;
 import com.polot.gym.payload.response.TraineeProfileResponse;
 import com.polot.gym.payload.response.TrainerResponse;
@@ -17,13 +18,13 @@ public interface TraineeService {
 
     TraineeProfileResponse updateProfile(TraineeProfileUpdateRequest request);
 
-    void deleteProfile(String username, String password);
-
-    List<TrainerResponse> updateTrainers(UpdateTraineeTrainersRequest request);
+    Boolean deleteProfile(String username, String password);
 
     List<TrainingResponse> getTrainings(String username, String password, LocalDate periodFrom, LocalDate periodTo, String trainerName, Integer trainingTypeId);
 
     Trainee getByUsername(String traineeUsername);
 
-    void activeDeactive(StatusRequest request);
+    User activeDeactive(StatusRequest request);
+
+    List<TrainerResponse> updateTraineeTrainers(UpdateTraineeTrainersRequest request);
 }
