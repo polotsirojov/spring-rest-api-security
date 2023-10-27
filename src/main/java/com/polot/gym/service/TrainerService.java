@@ -1,6 +1,7 @@
 package com.polot.gym.service;
 
 import com.polot.gym.entity.Trainer;
+import com.polot.gym.entity.User;
 import com.polot.gym.payload.request.StatusRequest;
 import com.polot.gym.payload.request.TrainerRegisterRequest;
 import com.polot.gym.payload.request.TrainerUpdateProfileRequest;
@@ -28,5 +29,5 @@ public interface TrainerService {
 
     Trainer getByUsername(String traineeUsername);
 
-    void activeDeactive(StatusRequest request);
+    User activeDeactive(StatusRequest request);
 }

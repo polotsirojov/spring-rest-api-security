@@ -130,11 +130,11 @@ public class TrainerServiceImpl implements TrainerService {
     }
 
     @Override
-    public void activeDeactive(StatusRequest request) {
+    public User activeDeactive(StatusRequest request) {
         log.info("TraineeService activeDeactive. data:{}", request);
         User user = userService.selectByUsernameAndPassword(request.getUsername(), request.getPassword());
         trainerRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainer not found"));
-        userService.updateUserStatus(user, request.getIsActive());
+        return userService.updateUserStatus(user, request.getIsActive());
     }
 
     private TrainerProfileResponse mapTrainer(User user, Trainer trainer) {

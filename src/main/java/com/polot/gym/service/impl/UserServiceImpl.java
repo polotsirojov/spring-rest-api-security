@@ -37,7 +37,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.save(User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
-                .username(generateRandomText())
+                .username(request.getFirstName().toLowerCase() + "." + request.getLastName().toLowerCase())
                 .password(passwordEncoder.encode(password))
                 .isActive(true)
                 .role(role)
@@ -104,7 +104,6 @@ public class UserServiceImpl implements UserService {
         if (!passwordEncoder.matches(password, user.getPassword()))
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Username or password is incorrect");
         return user;
-
     }
 
     @Override
@@ -139,13 +138,16 @@ public class UserServiceImpl implements UserService {
         String chars = "abcdefghijklmnopqrstuvwxyz";
         String CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         String NUMS = "1234567890";
-        return twoRandChars(chars) + twoRandChars(CHARS) + twoRandChars(NUMS);
+        return twoRandChars(chars, 3) + twoRandChars(CHARS, 3) + twoRandChars(NUMS, 4);
     }
 
-    private String twoRandChars(String src) {
+    private String twoRandChars(String src, int count) {
         Random rnd = new Random();
-        int index1 = (int) (rnd.nextFloat() * src.length());
-        int index2 = (int) (rnd.nextFloat() * src.length());
-        return "" + src.charAt(index1) + src.charAt(index2);
+        StringBuilder s = new StringBuilder();
+        for (int i = 0; i < count; i++) {
+            int index = (int) (rnd.nextFloat() * src.length());
+            s.append(src.charAt(index));
+        }
+        return s.toString();
     }
 }

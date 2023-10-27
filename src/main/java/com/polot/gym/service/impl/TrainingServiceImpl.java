@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -115,10 +116,10 @@ public class TrainingServiceImpl implements TrainingService {
     }
 
     @Override
-    public void create(CreateTrainingRequest request) {
+    public Training create(CreateTrainingRequest request) {
         log.info("TrainingService create data:{}", request);
         Trainer trainer = trainerService.getByUsername(request.getTrainerUsername());
-        trainingRepository.save(Training.builder()
+        return trainingRepository.save(Training.builder()
                 .trainee(traineeService.getByUsername(request.getTraineeUsername()))
                 .trainer(trainer)
                 .trainingName(request.getTrainingName())
@@ -131,5 +132,10 @@ public class TrainingServiceImpl implements TrainingService {
     @Override
     public List<TrainingType> getTrainingTypes() {
         return trainingTypeRepository.findAll();
+    }
+
+    @Override
+    public void deleteTraineeTrainers(Trainee trainee, List<Trainer> trainers) {
+        trainingRepository.deleteAllByTraineeAndTrainerIn(trainee,trainers);
     }
 }
