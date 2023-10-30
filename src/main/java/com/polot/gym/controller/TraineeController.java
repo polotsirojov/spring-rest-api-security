@@ -1,15 +1,14 @@
 package com.polot.gym.controller;
 
+import com.polot.gym.payload.request.StatusRequest;
 import com.polot.gym.payload.request.TraineeProfileUpdateRequest;
 import com.polot.gym.payload.request.TraineeRegisterRequest;
-import com.polot.gym.payload.request.StatusRequest;
 import com.polot.gym.payload.request.UpdateTraineeTrainersRequest;
 import com.polot.gym.payload.response.TraineeProfileResponse;
 import com.polot.gym.payload.response.TrainerResponse;
 import com.polot.gym.payload.response.TrainingResponse;
 import com.polot.gym.payload.response.UsernamePasswordResponse;
 import com.polot.gym.service.TraineeService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
@@ -58,13 +57,13 @@ public class TraineeController {
     }
 
     @PatchMapping
-    public HttpEntity<Void> activeDeactive(@Valid @RequestBody StatusRequest request){
+    public HttpEntity<Void> activeDeactive(@Valid @RequestBody StatusRequest request) {
         traineeService.activeDeactive(request);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("update-trainers")
-    public HttpEntity<List<TrainerResponse>> updateTraineeTrainers(@Valid @RequestBody UpdateTraineeTrainersRequest request){
+    public HttpEntity<List<TrainerResponse>> updateTraineeTrainers(@Valid @RequestBody UpdateTraineeTrainersRequest request) {
         return ResponseEntity.ok(traineeService.updateTraineeTrainers(request));
     }
 }
