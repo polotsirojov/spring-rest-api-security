@@ -21,6 +21,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -136,5 +137,15 @@ class TrainingServiceImplTest {
         given(trainingTypeRepository.findAll()).willReturn(List.of(trainingType));
         List<TrainingType> trainingTypes = trainingService.getTrainingTypes();
         assertThat(trainingTypes.size()).isEqualTo(1);
+    }
+
+    @Test
+    void deleteTraineeTrainers(){
+        Trainee trainee = new Trainee();
+        List<Trainer> trainers = Arrays.asList(new Trainer(), new Trainer());
+        trainingService.deleteTraineeTrainers(trainee,trainers);
+
+        Mockito.verify(trainingRepository).deleteAllByTraineeAndTrainerIn(trainee, trainers);
+        Mockito.verifyNoMoreInteractions(trainingRepository);
     }
 }
