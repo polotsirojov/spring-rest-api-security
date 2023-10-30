@@ -27,7 +27,7 @@ public class TraineeController {
     private final TraineeService traineeService;
 
     @PostMapping
-    public HttpEntity<UsernamePasswordResponse> register(@Valid @RequestBody TraineeRegisterRequest request, HttpServletRequest request1) {
+    public HttpEntity<UsernamePasswordResponse> register(@Valid @RequestBody TraineeRegisterRequest request) {
         return ResponseEntity.ok(traineeService.register(request));
     }
 

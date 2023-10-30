@@ -12,7 +12,7 @@ public class FilterConfig {
     public FilterRegistrationBean<LoggingFilter> loggingFilterRegistrationBean() {
         FilterRegistrationBean<LoggingFilter> registrationBean = new FilterRegistrationBean<>();
         registrationBean.setFilter(new LoggingFilter());
-        registrationBean.addUrlPatterns("/api/*"); // Specify the URL patterns to which the filter should be applied
+        registrationBean.addUrlPatterns("/api/*");
         return registrationBean;
     }
 }
