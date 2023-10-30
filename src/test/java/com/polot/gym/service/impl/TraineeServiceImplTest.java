@@ -1,5 +1,6 @@
 package com.polot.gym.service.impl;
 
+import com.polot.gym.config.RequestContextHolder;
 import com.polot.gym.entity.Trainee;
 import com.polot.gym.entity.Trainer;
 import com.polot.gym.entity.User;
@@ -11,11 +12,13 @@ import com.polot.gym.service.AuthService;
 import com.polot.gym.service.TrainerService;
 import com.polot.gym.service.TrainingService;
 import com.polot.gym.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
@@ -58,6 +61,8 @@ class TraineeServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+        RequestContextHolder.setRequest(request);
         traineeService = new TraineeServiceImpl(traineeRepository, userService, trainerService, trainingService, authService, userSession);
         username = "username";
         password = "pass";

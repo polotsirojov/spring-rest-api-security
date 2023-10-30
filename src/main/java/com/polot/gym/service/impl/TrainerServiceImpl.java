@@ -1,5 +1,6 @@
 package com.polot.gym.service.impl;
 
+import com.polot.gym.config.RequestContextHolder;
 import com.polot.gym.entity.Trainer;
 import com.polot.gym.entity.TrainingType;
 import com.polot.gym.entity.User;
@@ -50,7 +51,7 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     public UsernamePasswordResponse register(TrainerRegisterRequest request) {
-        log.info("TrainerService register trainee method");
+        log.info("TrainerService register trainee method, TransactionId: {}, RequestBody {}", RequestContextHolder.getTransactionId(), request);
         TrainingType trainingType = trainingTypeRepository.findById(request.getSpecializationId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Training Type not found"));
         UserPasswordResponse user = userService.createUser(UserRequest.builder()
                 .firstName(request.getFirstName())
@@ -77,7 +78,7 @@ public class TrainerServiceImpl implements TrainerService {
     @Override
     public TrainerProfileResponse getProfile() {
         User user = userSession.getUser();
-        log.info("TrainerService getProfile method username:{}", user.getUsername());
+        log.info("TrainerService getProfile method username:{}, TransactionId: {}", user.getUsername(), RequestContextHolder.getTransactionId());
         Trainer trainer = trainerRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainer not found"));
         return mapTrainer(user, trainer);
     }
@@ -85,7 +86,7 @@ public class TrainerServiceImpl implements TrainerService {
     @Override
     @Transactional
     public TrainerProfileResponse updateProfile(TrainerUpdateProfileRequest request) {
-        log.info("TrainerService updateProfile method. data: {}", request);
+        log.info("TrainerService updateProfile method. data: {}, TransactionId: {}", request, RequestContextHolder.getTransactionId());
         TrainingType trainingType = trainingTypeRepository.findById(request.getSpecializationId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, " Training type not found"));
         User user = userService.selectByUsernameAndPassword(request.getUsername(), request.getPassword());
         userService.updateUser(user, request.getFirstName(), request.getLastName(), request.getIsActive());
@@ -98,7 +99,7 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     public List<TrainerResponse> getNotAssignedTrainers(String username, String password) {
-        log.info("TrainerService getNotAssignedTrainers method username:{}, password:{}", username, password);
+        log.info("TrainerService getNotAssignedTrainers method username:{}, password:{}, TransactionId: {}", username, password, RequestContextHolder.getTransactionId());
         User user = userService.selectByUsernameAndPassword(username, password);
         List<Trainer> trainers = trainerRepository.getNotAssignedTrainers();
         return trainers.stream().map(trainer -> TrainerResponse.builder()
@@ -116,7 +117,7 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     public List<TrainingResponse> getTrainings(String username, String password, LocalDate periodFrom, LocalDate periodTo, String traineeName) {
-        log.info("TraineeService getTrainings username:{}, password:{}, periodFrom:{}, periodTo:{}, traineeName:{}", username, password, periodFrom, periodTo, traineeName);
+        log.info("TraineeService getTrainings username:{}, password:{}, periodFrom:{}, periodTo:{}, traineeName:{}, TransactionId: {}", username, password, periodFrom, periodTo, traineeName, RequestContextHolder.getTransactionId());
         User user = userService.selectByUsernameAndPassword(username, password);
         Trainer trainer = trainerRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainer not found"));
         return trainingService.getTrainerTrainings(trainer, periodFrom, periodTo, traineeName);
@@ -124,14 +125,14 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     public Trainer getByUsername(String traineeUsername) {
-        log.info("TrainerService getByUsername. username:{}", traineeUsername);
+        log.info("TrainerService getByUsername. username:{}, TransactionId: {}", traineeUsername, RequestContextHolder.getTransactionId());
         User user = userService.selectByUsername(traineeUsername);
         return trainerRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainer not found"));
     }
 
     @Override
     public User activeDeactive(StatusRequest request) {
-        log.info("TraineeService activeDeactive. data:{}", request);
+        log.info("TraineeService activeDeactive. data:{}, TransactionId: {}", request, RequestContextHolder.getTransactionId());
         User user = userService.selectByUsernameAndPassword(request.getUsername(), request.getPassword());
         trainerRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainer not found"));
         return userService.updateUserStatus(user, request.getIsActive());

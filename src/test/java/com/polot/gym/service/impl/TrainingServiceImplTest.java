@@ -1,5 +1,6 @@
 package com.polot.gym.service.impl;
 
+import com.polot.gym.config.RequestContextHolder;
 import com.polot.gym.entity.*;
 import com.polot.gym.entity.enums.Role;
 import com.polot.gym.payload.request.CreateTrainingRequest;
@@ -10,6 +11,7 @@ import com.polot.gym.service.TraineeService;
 import com.polot.gym.service.TrainerService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,6 +57,8 @@ class TrainingServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+        RequestContextHolder.setRequest(request);
         trainingService = new TrainingServiceImpl(entityManager, trainingRepository, traineeService, trainerService, trainingTypeRepository);
         trainingType = new TrainingType(1L, "type");
         trainerUser = User.builder()

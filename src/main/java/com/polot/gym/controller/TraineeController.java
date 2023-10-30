@@ -9,6 +9,7 @@ import com.polot.gym.payload.response.TrainerResponse;
 import com.polot.gym.payload.response.TrainingResponse;
 import com.polot.gym.payload.response.UsernamePasswordResponse;
 import com.polot.gym.service.TraineeService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
@@ -26,7 +27,7 @@ public class TraineeController {
     private final TraineeService traineeService;
 
     @PostMapping
-    public HttpEntity<UsernamePasswordResponse> register(@Valid @RequestBody TraineeRegisterRequest request) {
+    public HttpEntity<UsernamePasswordResponse> register(@Valid @RequestBody TraineeRegisterRequest request, HttpServletRequest request1) {
         return ResponseEntity.ok(traineeService.register(request));
     }
 

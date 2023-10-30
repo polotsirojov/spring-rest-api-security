@@ -1,5 +1,6 @@
 package com.polot.gym.service.impl;
 
+import com.polot.gym.config.RequestContextHolder;
 import com.polot.gym.entity.User;
 import com.polot.gym.entity.enums.Role;
 import com.polot.gym.payload.request.ChangeLoginPasswordRequest;
@@ -8,13 +9,11 @@ import com.polot.gym.payload.response.UserPasswordResponse;
 import com.polot.gym.payload.response.UsernamePasswordResponse;
 import com.polot.gym.repository.UserRepository;
 import com.polot.gym.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -52,6 +51,8 @@ class UserServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+        RequestContextHolder.setRequest(request);
         userService = new UserServiceImpl(userRepository, passwordEncoder, authService);
         user = User.builder()
                 .id(1L)
