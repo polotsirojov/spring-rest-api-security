@@ -34,11 +34,16 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserPasswordResponse createUser(UserRequest request, Role role) {
         log.info("UserService createUser user:{}, role:{}, TransactionId: {}", request, role.name(), RequestContextHolder.getTransactionId());
+        String username = request.getFirstName().toLowerCase() + "." + request.getLastName().toLowerCase();
+        int usersCountByUsername = userRepository.countAllByUsernameContainingIgnoreCase(username);
+        if (usersCountByUsername > 0) {
+            username += usersCountByUsername;
+        }
         String password = generateRandomText();
         User user = userRepository.save(User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
-                .username(request.getFirstName().toLowerCase() + "." + request.getLastName().toLowerCase())
+                .username(username)
                 .password(passwordEncoder.encode(password))
                 .isActive(true)
                 .role(role)
