@@ -152,11 +152,21 @@ class TrainerServiceImplTest {
     }
 
     @Test
-    void activeDeactive() {
+    void activate() {
         given(userService.selectByUsernameAndPassword(username, password)).willReturn(user);
-        given(trainerRepository.findByUser(user)).willReturn(Optional.of(trainer));
+        given(trainerRepository.findById(1)).willReturn(Optional.of(trainer));
+        given(userService.updateUserStatus(user, true)).willReturn(user);
+        User user1 = trainerService.activate(1,new StatusRequest(username, password, true));
+
+        assertThat(user1.getIsActive()).isTrue();
+    }
+
+    @Test
+    void deActivate() {
+        given(userService.selectByUsernameAndPassword(username, password)).willReturn(user);
+        given(trainerRepository.findById(1)).willReturn(Optional.of(trainer));
         given(userService.updateUserStatus(user, false)).willReturn(inActiveUser);
-        User user1 = trainerService.activeDeactive(new StatusRequest(username, password, false));
+        User user1 = trainerService.deActivate(1,new StatusRequest(username, password, false));
 
         assertThat(user1.getIsActive()).isFalse();
     }

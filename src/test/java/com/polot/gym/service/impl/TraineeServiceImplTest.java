@@ -154,17 +154,27 @@ class TraineeServiceImplTest {
     }
 
     @Test
-    void activeDeactive() {
+    void activate() {
         given(userService.selectByUsernameAndPassword(username, password)).willReturn(user);
-        given(traineeRepository.findByUser(user)).willReturn(Optional.of(trainee));
+        given(traineeRepository.findById(1)).willReturn(Optional.of(trainee));
+        given(userService.updateUserStatus(user, true)).willReturn(user);
+        User user1 = traineeService.activate(1, new StatusRequest(username, password, true));
+
+        assertThat(user1.getIsActive()).isTrue();
+    }
+
+    @Test
+    void deactivate() {
+        given(userService.selectByUsernameAndPassword(username, password)).willReturn(user);
+        given(traineeRepository.findById(1)).willReturn(Optional.of(trainee));
         given(userService.updateUserStatus(user, false)).willReturn(inActiveUser);
-        User user1 = traineeService.activeDeactive(new StatusRequest(username, password, false));
+        User user1 = traineeService.deActivate(1, new StatusRequest(username, password, false));
 
         assertThat(user1.getIsActive()).isFalse();
     }
 
     @Test
-    void updateTraineeTrainers(){
+    void updateTraineeTrainers() {
         List<Trainer> trainerList = new ArrayList<>();
         Trainer trainer1 = new Trainer();
         Trainer trainer2 = new Trainer();
@@ -173,8 +183,8 @@ class TraineeServiceImplTest {
         given(userService.selectByUsername(username)).willReturn(user);
         given(traineeRepository.findByUser(user)).willReturn(Optional.of(trainee));
         given(trainerService.getTrainersByUsername(anyList())).willReturn(trainerList);
-        List<TrainerResponse> response = traineeService.updateTraineeTrainers(new UpdateTraineeTrainersRequest(username,List.of(new TrainerUsernameRequest("username"))));
-        verify(trainingService).deleteTraineeTrainers(trainee,trainerList);
+        List<TrainerResponse> response = traineeService.updateTraineeTrainers(new UpdateTraineeTrainersRequest(username, List.of(new TrainerUsernameRequest("username"))));
+        verify(trainingService).deleteTraineeTrainers(trainee, trainerList);
         assertThat(response).isNotNull();
     }
 }

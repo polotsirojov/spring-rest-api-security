@@ -24,7 +24,9 @@ public interface TraineeService {
 
     Trainee getByUsername(String traineeUsername);
 
-    User activeDeactive(StatusRequest request);
+    User activate(Integer traineeId,StatusRequest request);
+
+    User deActivate(Integer traineeId,StatusRequest request);
 
     List<TrainerResponse> updateTraineeTrainers(UpdateTraineeTrainersRequest request);
 }

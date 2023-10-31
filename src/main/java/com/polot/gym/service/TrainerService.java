@@ -29,5 +29,7 @@ public interface TrainerService {
 
     Trainer getByUsername(String traineeUsername);
 
-    User activeDeactive(StatusRequest request);
+    User activate(Integer trainerId, StatusRequest request);
+
+    User deActivate(Integer trainerId, StatusRequest request);
 }

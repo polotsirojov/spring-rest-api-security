@@ -56,9 +56,15 @@ public class TraineeController {
         return ResponseEntity.ok(traineeService.getTrainings(username, password, periodFrom, periodTo, trainerName, trainingTypeId));
     }
 
-    @PatchMapping
-    public HttpEntity<Void> activeDeactive(@Valid @RequestBody StatusRequest request) {
-        traineeService.activeDeactive(request);
+    @PatchMapping("activate/{traineeId}")
+    public HttpEntity<Void> activate(@PathVariable Integer traineeId, @Valid @RequestBody StatusRequest request) {
+        traineeService.activate(traineeId, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("deactivate/{traineeId}")
+    public HttpEntity<Void> deActivate(@PathVariable Integer traineeId, @Valid @RequestBody StatusRequest request) {
+        traineeService.deActivate(traineeId, request);
         return ResponseEntity.ok().build();
     }
 

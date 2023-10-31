@@ -31,17 +31,17 @@ public class TrainerController {
 
     @GetMapping
     @PreAuthorize(value = "hasRole('TRAINER')")
-    public HttpEntity<TrainerProfileResponse> getProfile(){
+    public HttpEntity<TrainerProfileResponse> getProfile() {
         return ResponseEntity.ok(trainerService.getProfile());
     }
 
     @PutMapping
-    public HttpEntity<TrainerProfileResponse> updateProfile(@Valid @RequestBody TrainerUpdateProfileRequest request){
+    public HttpEntity<TrainerProfileResponse> updateProfile(@Valid @RequestBody TrainerUpdateProfileRequest request) {
         return ResponseEntity.ok(trainerService.updateProfile(request));
     }
 
     @GetMapping("not-assigned")
-    public HttpEntity<List<TrainerResponse>> getNotAssignedTrainers(@RequestParam String username, @RequestParam String password){
+    public HttpEntity<List<TrainerResponse>> getNotAssignedTrainers(@RequestParam String username, @RequestParam String password) {
         return ResponseEntity.ok(trainerService.getNotAssignedTrainers(username, password));
     }
 
@@ -53,9 +53,15 @@ public class TrainerController {
         return ResponseEntity.ok(trainerService.getTrainings(username, password, periodFrom, periodTo, traineeName));
     }
 
-    @PatchMapping
-    public HttpEntity<Void> activeDeactive(@Valid @RequestBody StatusRequest request){
-        trainerService.activeDeactive(request);
+    @PatchMapping("activate/{trainerId}")
+    public HttpEntity<Void> activate(@PathVariable Integer trainerId, @Valid @RequestBody StatusRequest request) {
+        trainerService.activate(trainerId, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("deactivate/{trainerId}")
+    public HttpEntity<Void> deActivate(@PathVariable Integer trainerId, @Valid @RequestBody StatusRequest request) {
+        trainerService.deActivate(trainerId, request);
         return ResponseEntity.ok().build();
     }
 
