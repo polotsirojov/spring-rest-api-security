@@ -1,5 +1,6 @@
 package com.polot.gym.service.impl;
 
+import com.polot.gym.config.RequestContextHolder;
 import com.polot.gym.entity.Trainee;
 import com.polot.gym.entity.Trainer;
 import com.polot.gym.entity.Training;
@@ -41,7 +42,7 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     public List<TrainingResponse> getTraineeTrainings(Trainee trainee, LocalDate periodFrom, LocalDate periodTo, String trainerName, Integer trainingTypeId) {
-        log.info("TrainingService getTraineeTrainings traineeId:{}, periodFrom:{}, periodTo:{}, trainerName:{}, trainingTypeId:{}", trainee.getId(), periodFrom, periodTo, trainerName, trainingTypeId);
+        log.info("TrainingService getTraineeTrainings traineeId:{}, periodFrom:{}, periodTo:{}, trainerName:{}, trainingTypeId:{}, TransactionId: {}", trainee.getId(), periodFrom, periodTo, trainerName, trainingTypeId, RequestContextHolder.getTransactionId());
         StringBuilder jpql = new StringBuilder("SELECT t FROM Training t WHERE t.trainee = :trainee ");
         if (periodFrom != null) {
             jpql.append("and t.trainingDate >= :periodFrom ");
@@ -81,7 +82,7 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     public List<TrainingResponse> getTrainerTrainings(Trainer trainer, LocalDate periodFrom, LocalDate periodTo, String traineeName) {
-        log.info("TrainingService getTrainerTrainings trainerId:{}, periodFrom:{}, periodTo:{}, traineeName:{}", trainer.getId(), periodFrom, periodTo, traineeName);
+        log.info("TrainingService getTrainerTrainings trainerId:{}, periodFrom:{}, periodTo:{}, traineeName:{}, TransactionId: {}", trainer.getId(), periodFrom, periodTo, traineeName, RequestContextHolder.getTransactionId());
         StringBuilder jpql = new StringBuilder("SELECT t FROM Training t WHERE t.trainer = :trainer ");
         if (periodFrom != null) {
             jpql.append("and t.trainingDate >= :periodFrom ");
@@ -115,10 +116,10 @@ public class TrainingServiceImpl implements TrainingService {
     }
 
     @Override
-    public void create(CreateTrainingRequest request) {
-        log.info("TrainingService create data:{}", request);
+    public Training create(CreateTrainingRequest request) {
+        log.info("TrainingService create data:{}, TransactionId: {}", request, RequestContextHolder.getTransactionId());
         Trainer trainer = trainerService.getByUsername(request.getTrainerUsername());
-        trainingRepository.save(Training.builder()
+        return trainingRepository.save(Training.builder()
                 .trainee(traineeService.getByUsername(request.getTraineeUsername()))
                 .trainer(trainer)
                 .trainingName(request.getTrainingName())
@@ -130,6 +131,13 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     public List<TrainingType> getTrainingTypes() {
+        log.info("getTrainingTypes TransactionId: {}", RequestContextHolder.getTransactionId());
         return trainingTypeRepository.findAll();
+    }
+
+    @Override
+    public void deleteTraineeTrainers(Trainee trainee, List<Trainer> trainers) {
+        log.info("deleteTraineeTrainers TransactionId: {}", RequestContextHolder.getTransactionId());
+        trainingRepository.deleteAllByTraineeAndTrainerIn(trainee,trainers);
     }
 }
