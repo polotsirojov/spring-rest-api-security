@@ -2,6 +2,7 @@ package com.polot.gym.config;
 
 import com.polot.gym.filter.JwtAuthFilter;
 import com.polot.gym.service.impl.UserInfoUserDetailsService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -62,6 +63,15 @@ public class SecurityConfig {
                 .authenticated().and()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .exceptionHandling()
+                .authenticationEntryPoint(
+                        (request, response, authException)
+                                -> response.sendError(
+                                HttpServletResponse.SC_UNAUTHORIZED,
+                                authException.getLocalizedMessage()
+                        )
+                )
                 .and()
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
