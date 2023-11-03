@@ -1,11 +1,14 @@
 package com.polot.gym.service.impl;
 
+import com.polot.gym.client.report.ReportServiceClient;
 import com.polot.gym.config.RequestContextHolder;
 import com.polot.gym.entity.Trainee;
 import com.polot.gym.entity.Trainer;
 import com.polot.gym.entity.Training;
 import com.polot.gym.entity.TrainingType;
+import com.polot.gym.payload.constants.ReportType;
 import com.polot.gym.payload.request.CreateTrainingRequest;
+import com.polot.gym.payload.request.ReportRequest;
 import com.polot.gym.payload.response.TrainingResponse;
 import com.polot.gym.repository.TrainingRepository;
 import com.polot.gym.repository.TrainingTypeRepository;
@@ -18,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -30,14 +34,16 @@ public class TrainingServiceImpl implements TrainingService {
     private final TraineeService traineeService;
     private final TrainerService trainerService;
     private final TrainingTypeRepository trainingTypeRepository;
+    private final ReportServiceClient reportServiceClient;
     private Logger log = LoggerFactory.getLogger(this.getClass());
 
-    public TrainingServiceImpl(EntityManager entityManager, TrainingRepository trainingRepository, @Lazy TraineeService traineeService, @Lazy TrainerService trainerService, TrainingTypeRepository trainingTypeRepository) {
+    public TrainingServiceImpl(EntityManager entityManager, TrainingRepository trainingRepository, @Lazy TraineeService traineeService, @Lazy TrainerService trainerService, TrainingTypeRepository trainingTypeRepository, ReportServiceClient reportServiceClient) {
         this.entityManager = entityManager;
         this.trainingRepository = trainingRepository;
         this.traineeService = traineeService;
         this.trainerService = trainerService;
         this.trainingTypeRepository = trainingTypeRepository;
+        this.reportServiceClient = reportServiceClient;
     }
 
     @Override
@@ -119,7 +125,7 @@ public class TrainingServiceImpl implements TrainingService {
     public Training create(CreateTrainingRequest request) {
         log.info("TrainingService create data:{}, TransactionId: {}", request, RequestContextHolder.getTransactionId());
         Trainer trainer = trainerService.getByUsername(request.getTrainerUsername());
-        return trainingRepository.save(Training.builder()
+        Training training = trainingRepository.save(Training.builder()
                 .trainee(traineeService.getByUsername(request.getTraineeUsername()))
                 .trainer(trainer)
                 .trainingName(request.getTrainingName())
@@ -127,6 +133,16 @@ public class TrainingServiceImpl implements TrainingService {
                 .trainingType(trainer.getSpecialization())
                 .trainingDuration(request.getTrainingDuration())
                 .build());
+        reportServiceClient.postReport(new ReportRequest(
+                training.getTrainer().getUser().getUsername(),
+                training.getTrainer().getUser().getFirstName(),
+                training.getTrainer().getUser().getLastName(),
+                training.getTrainer().getUser().getIsActive(),
+                training.getTrainingDate(),
+                training.getTrainingDuration(),
+                ReportType.ADD
+        ));
+        return training;
     }
 
     @Override
@@ -136,8 +152,21 @@ public class TrainingServiceImpl implements TrainingService {
     }
 
     @Override
+    @Transactional
     public void deleteTraineeTrainers(Trainee trainee, List<Trainer> trainers) {
         log.info("deleteTraineeTrainers TransactionId: {}", RequestContextHolder.getTransactionId());
-        trainingRepository.deleteAllByTraineeAndTrainerIn(trainee,trainers);
+        List<Training> list = trainingRepository.findAllByTraineeAndTrainerIn(trainee, trainers);
+        for (Training training : list) {
+            reportServiceClient.postReport(new ReportRequest(
+                    training.getTrainer().getUser().getUsername(),
+                    training.getTrainer().getUser().getFirstName(),
+                    training.getTrainer().getUser().getLastName(),
+                    training.getTrainer().getUser().getIsActive(),
+                    training.getTrainingDate(),
+                    training.getTrainingDuration(),
+                    ReportType.DELETE
+            ));
+        }
+        trainingRepository.deleteAllByTraineeAndTrainerIn(trainee, trainers);
     }
 }
