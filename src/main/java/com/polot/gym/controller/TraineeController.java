@@ -22,6 +22,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/trainee")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "https://www.google.com")
 public class TraineeController {
     private final TraineeService traineeService;
 

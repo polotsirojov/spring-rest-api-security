@@ -9,6 +9,7 @@ import com.polot.gym.payload.request.*;
 import com.polot.gym.payload.response.*;
 import com.polot.gym.repository.TraineeRepository;
 import com.polot.gym.service.*;
+import io.micrometer.core.annotation.Timed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -46,6 +47,7 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Transactional
+    @Timed(value = "register.trainee.time", description = "Time taken to register trainee")
     public UsernamePasswordResponse register(TraineeRegisterRequest request) {
         log.info("TransactionId: {}, RequestBody: {}", RequestContextHolder.getTransactionId(), request);
         UserPasswordResponse user = userService.createUser(UserRequest.builder()
@@ -119,6 +121,7 @@ public class TraineeServiceImpl implements TraineeService {
         log.info("TraineeService deleteProfile method username:{}, password:{}, TransactionId: {}", username, password, RequestContextHolder.getTransactionId());
         User user = userService.selectByUsernameAndPassword(username, password);
         Trainee trainee = traineeRepository.findByUser(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found"));
+        trainingService.deleteTraineeTrainers(trainee, List.of());
         traineeRepository.delete(trainee);
         userService.deleteUser(user);
         return true;
